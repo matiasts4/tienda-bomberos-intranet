@@ -1,0 +1,60 @@
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+.next/
+out/
+build/
+dist/
+.turbo/
+coverage/
+
+# PHP / Laravel / Backend
+vendor/
+backend/vendor/
+backend/storage/*.key
+backend/storage/app/public/
+backend/storage/framework/cache/*
+!backend/storage/framework/cache/.gitignore
+backend/storage/framework/sessions/*
+!backend/storage/framework/sessions/.gitignore
+backend/storage/framework/views/*
+!backend/storage/framework/views/.gitignore
+backend/storage/logs/*
+!backend/storage/logs/.gitignore
+backend/bootstrap/cache/*
+!backend/bootstrap/cache/.gitignore
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+
+# Internal / Audits / Temp
+temp/
+tmp/
+*.log
+
+# Internal coordination & tools
+INSTRUCCIONES_EQUIPO.md
+instrucciones_equipo/
+guias_agentes/
+.guias_agentes/
+scripts/
+.kite/
