@@ -1,24 +1,59 @@
+name: tienda-bomberos-intranet
+
+# Stack de desarrollo de la intranet de Tienda Bomberos SpA.
+#
+#   frontend (Next.js)  :3000  ->  habla con la API por el navegador del usuario
+#   backend  (Laravel)  :8000  ->  habla con MariaDB por la red interna de Compose
+#   mysql    (MariaDB)  :3307 en el host, 3306 dentro de la red
+#
+# Las variables sin valor por defecto salen del .env de esta carpeta
+# (ver .env.example). Compose lee ese archivo automáticamente.
+
 services:
   backend:
     build:
       context: ./backend
-      dockerfile: docker/Dockerfile
+      # La imagen vive en docker/php/, no en la raíz de docker/.
+      dockerfile: docker/php/Dockerfile
+      args:
+        # El entrypoint corre como usuario no-root; sin el UID/GID del host,
+        # storage/ y bootstrap/cache/ quedan escritos como root en el bind mount.
+        UID: ${UID:-501}
+        GID: ${GID:-20}
     restart: unless-stopped
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - DB_CONNECTION=mysql
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:-tienda_bomberos}
-      - DB_USERNAME=${DB_USERNAME:-root}
-      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      APP_ENV: local
+      APP_DEBUG: "true"
+      # El entrypoint solo instala vendor/, genera APP_KEY y migra cuando esta
+      # variable es "true". Sin ella se queda esperando a otro contenedor que
+      # haga la instalación y aborta a los 5 minutos.
+      INSTALL_DEPENDENCIES: "true"
+      DB_CONNECTION: mysql
+      # Nombre del servicio, no localhost: dentro de la red de Compose cada
+      # contenedor resuelve a los demás por su nombre de servicio.
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-tienda_bomberos}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
     volumes:
       - ./backend:/var/www/html
+      # vendor/ aislado del host: las dependencias se compilan para Linux y el
+      # bind mount de arriba, por sí solo, las taparía con la carpeta del host.
+      - backend-vendor:/var/www/html/vendor
+    healthcheck:
+      # /up es la ruta de salud que registra bootstrap/app.php.
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8000/up') === false ? 1 : 0);"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      # Margen amplio: el primer arranque incluye composer install + migraciones.
+      start_period: 300s
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
   frontend:
     build:
@@ -32,9 +67,13 @@ services:
       - frontend-node-modules:/app/node_modules
       - frontend-next:/app/.next
     environment:
+      # Esta URL la resuelve el navegador del usuario, no el contenedor, así que
+      # es localhost y el puerto publicado del backend (no http://backend:8000).
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
       WATCHPACK_POLLING: "true"
     depends_on:
+      # Sin condition: el dev server de Next no necesita la API para levantar,
+      # y esperar el healthcheck del backend retrasaría el arranque 5 minutos.
       - backend
 
   mysql:
@@ -45,11 +84,20 @@ services:
       MARIADB_DATABASE: ${DB_DATABASE:-tienda_bomberos}
       MARIADB_ROOT_HOST: '%'
     ports:
-      - "3307:3306"
+      - "${DB_PORT_HOST:-3307}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      # Sin esto, "depends_on" solo garantiza que el contenedor arrancó, no que
+      # MariaDB ya acepte conexiones, y las migraciones del backend fallan.
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
 volumes:
+  backend-vendor:
   frontend-node-modules:
   frontend-next:
   mysql-data:
