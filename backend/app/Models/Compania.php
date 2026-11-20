@@ -37,6 +37,16 @@ class Compania extends Model
         return $this->belongsToMany(Contacto::class, 'compania_contacto', 'compania_id', 'contacto_id');
     }
 
+    public function cotizaciones()
+    {
+        return $this->hasMany(Cotizacion::class, 'compania_id');
+    }
+
+    public function ordenesCorte()
+    {
+        return $this->hasMany(OrdenCorte::class, 'compania_id');
+    }
+
     /**
      * Cuerpos de las compañías dadas. Quien es de una compañía es también de su
      * cuerpo: al vincular contactos se agregan estos cuerpos para que el vínculo

@@ -4,11 +4,58 @@ namespace App\Http\Controllers;
 
 use App\Models\Compania;
 use App\Models\Cuerpo;
+use App\Services\InstitutionalOrderHistoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CompaniaController extends Controller
 {
+    /**
+     * GET /api/companies/{id}/orders
+     *
+     * Retorna el historial cronológico consolidado de cotizaciones aprobadas,
+     * órdenes de taller y pedidos entregados para una compañía bomberil,
+     * con filtros opcionales por año, estado de producción y tipo de prenda.
+     */
+    public function orders(Request $request, string $id, InstitutionalOrderHistoryService $historyService)
+    {
+        $compania = Compania::with('cuerpo')->find($id);
+
+        if (! $compania) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Compañía no encontrada',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'year' => 'nullable|integer|min:2000|max:2100',
+            'anio' => 'nullable|integer|min:2000|max:2100',
+            'status' => 'nullable|string|max:80',
+            'stage' => 'nullable|string|max:80',
+            'estado' => 'nullable|string|max:80',
+            'estado_produccion' => 'nullable|string|max:80',
+            'garment_type' => 'nullable|string|max:120',
+            'tipo_prenda' => 'nullable|string|max:120',
+            'product_type' => 'nullable|string|max:120',
+        ]);
+
+        $filters = [
+            'year' => $validated['year'] ?? $validated['anio'] ?? null,
+            'status' => $validated['status']
+                ?? $validated['stage']
+                ?? $validated['estado_produccion']
+                ?? $validated['estado']
+                ?? null,
+            'garment_type' => $validated['garment_type']
+                ?? $validated['tipo_prenda']
+                ?? $validated['product_type']
+                ?? null,
+        ];
+
+        return response()->json($historyService->forCompania($compania, $filters));
+    }
+
     /**
      * GET /api/cuerpos/{cuerpo}/companias
      *

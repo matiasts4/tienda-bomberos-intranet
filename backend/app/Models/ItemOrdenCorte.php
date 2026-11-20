@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Desglose de prenda, talla, color, tela y personalización dentro de una orden de corte.
+ */
 class ItemOrdenCorte extends Model
 {
     use HasFactory;
@@ -13,12 +16,20 @@ class ItemOrdenCorte extends Model
 
     protected $fillable = [
         'cutting_order_id',
+        'detalle_cotizacion_id',
+        'sku',
         'product_type',
         'size',
         'color',
         'quantity',
         'fabric_type',
+        'personalizacion',
         'notes',
+    ];
+
+    protected $casts = [
+        'quantity' => 'integer',
+        'personalizacion' => 'array',
     ];
 
     public function ordenCorte()
@@ -29,6 +40,11 @@ class ItemOrdenCorte extends Model
     public function cuttingOrder()
     {
         return $this->ordenCorte();
+    }
+
+    public function detalleCotizacion()
+    {
+        return $this->belongsTo(DetalleCotizacion::class, 'detalle_cotizacion_id');
     }
 
     public function packages()

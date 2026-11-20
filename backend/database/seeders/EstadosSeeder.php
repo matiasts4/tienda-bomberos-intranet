@@ -39,6 +39,14 @@ class EstadosSeeder extends Seeder
             ['nombre' => 'Anulado', 'color' => 'red', 'orden' => 3, 'next_estado_id' => null],
         ];
 
+        // 4. Estados Taller (máquina de etapas de producción)
+        $estadosTaller = [
+            ['nombre' => 'Corte', 'color' => '#f59e0b', 'orden' => 1, 'next_estado_id' => null],
+            ['nombre' => 'Confección', 'color' => '#3b82f6', 'orden' => 2, 'next_estado_id' => null],
+            ['nombre' => 'Empaque', 'color' => '#8b5cf6', 'orden' => 3, 'next_estado_id' => null],
+            ['nombre' => 'Terminado', 'color' => '#10b981', 'orden' => 4, 'next_estado_id' => null],
+        ];
+
         foreach ($estadosOportunidad as $e) {
             Estado::updateOrCreate(
                 ['scope' => 'oportunidad', 'nombre' => $e['nombre']],
@@ -56,6 +64,13 @@ class EstadosSeeder extends Seeder
         foreach ($estadosPeticion as $e) {
             Estado::updateOrCreate(
                 ['scope' => 'peticion', 'nombre' => $e['nombre']],
+                ['color' => $e['color'], 'orden' => $e['orden'], 'next_estado_id' => $e['next_estado_id']]
+            );
+        }
+
+        foreach ($estadosTaller as $e) {
+            Estado::updateOrCreate(
+                ['scope' => 'taller', 'nombre' => $e['nombre']],
                 ['color' => $e['color'], 'orden' => $e['orden'], 'next_estado_id' => $e['next_estado_id']]
             );
         }

@@ -186,6 +186,16 @@ class Cotizacion extends Model
         return $this->hasMany(Personalizacion::class, 'cotizacion_id');
     }
 
+    public function ordenesCorte()
+    {
+        return $this->hasMany(OrdenCorte::class, 'cotizacion_id');
+    }
+
+    public function cuttingOrders()
+    {
+        return $this->ordenesCorte();
+    }
+
     public function ultimaGestion()
     {
         return $this->hasOne(CotizacionGestion::class)->latestOfMany();

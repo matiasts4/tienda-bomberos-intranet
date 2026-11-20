@@ -14,6 +14,8 @@ class HistorialEtapa extends Model
         'user_id',
         'estado_anterior_id',
         'estado_nuevo_id',
+        'etapa_anterior',
+        'etapa_nueva',
         'observaciones',
     ];
 

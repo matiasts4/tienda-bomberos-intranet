@@ -2,11 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\Cotizacion;
+use App\Models\OrdenCorte;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class OrdenCorteFactory extends Factory
 {
-    protected $model = \App\Models\OrdenCorte::class;
+    protected $model = OrdenCorte::class;
 
     public function definition(): array
     {
@@ -22,6 +24,25 @@ class OrdenCorteFactory extends Factory
             'estimated_days'   => fake()->numberBetween(5, 30),
             'progress'         => 0,
         ];
+    }
+
+    public function forCotizacion(Cotizacion $cotizacion): static
+    {
+        return $this->state(fn () => [
+            'cotizacion_id' => $cotizacion->id,
+            'cuerpo_id' => $cotizacion->cuerpo_id ?? $cotizacion->compania?->cuerpo_id,
+            'compania_id' => $cotizacion->compania_id,
+            'client' => $cotizacion->nombre_cliente,
+            'fecha_compromiso' => $cotizacion->fecha_entrega,
+        ]);
+    }
+
+    public function inStage(string $stage): static
+    {
+        return $this->state(fn () => [
+            'status' => $stage,
+            'progress' => OrdenCorte::STAGE_PROGRESS[$stage] ?? 0,
+        ]);
     }
 
     public function enCorte(): static
