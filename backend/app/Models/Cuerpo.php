@@ -58,4 +58,14 @@ class Cuerpo extends Model
     {
         return $this->belongsToMany(Contacto::class, 'cuerpo_contacto', 'cuerpo_id', 'contacto_id');
     }
+
+    public function cotizaciones()
+    {
+        return $this->hasMany(Cotizacion::class, 'cuerpo_id');
+    }
+
+    public function ordenesCorte()
+    {
+        return $this->hasMany(OrdenCorte::class, 'cuerpo_id');
+    }
 }
