@@ -2,13 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Compania;
 use App\Models\Cuerpo;
 use App\Rules\RutChileno;
+use App\Services\InstitutionalOrderHistoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CuerpoController extends Controller
 {
+    /**
+     * GET /api/fire-departments/{id}/orders
+     *
+     * Retorna el historial institucional unificado para un Cuerpo de Bomberos
+     * (y todas sus compañías) o, si el identificador corresponde a una compañía,
+     * el historial de dicha compañía.
+     */
+    public function orders(Request $request, string $id, InstitutionalOrderHistoryService $historyService)
+    {
+        $validated = $request->validate([
+            'year' => 'nullable|integer|min:2000|max:2100',
+            'anio' => 'nullable|integer|min:2000|max:2100',
+            'status' => 'nullable|string|max:80',
+            'stage' => 'nullable|string|max:80',
+            'estado' => 'nullable|string|max:80',
+            'estado_produccion' => 'nullable|string|max:80',
+            'garment_type' => 'nullable|string|max:120',
+            'tipo_prenda' => 'nullable|string|max:120',
+            'product_type' => 'nullable|string|max:120',
+        ]);
+
+        $filters = [
+            'year' => $validated['year'] ?? $validated['anio'] ?? null,
+            'status' => $validated['status']
+                ?? $validated['stage']
+                ?? $validated['estado_produccion']
+                ?? $validated['estado']
+                ?? null,
+            'garment_type' => $validated['garment_type']
+                ?? $validated['tipo_prenda']
+                ?? $validated['product_type']
+                ?? null,
+        ];
+
+        $cuerpo = Cuerpo::find($id);
+        if ($cuerpo) {
+            return response()->json($historyService->forCuerpo($cuerpo, $filters));
+        }
+
+        $compania = Compania::find($id);
+        if ($compania) {
+            return response()->json($historyService->forCompania($compania, $filters));
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Cuerpo o compañía no encontrada',
+        ], 404);
+    }
+
     public function index(Request $request)
     {
         // OJO: el modal de "Editar cliente" se alimenta de este listado, así que

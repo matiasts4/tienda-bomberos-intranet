@@ -214,6 +214,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('cuerpos/{cuerpo}/logo', [\App\Http\Controllers\CuerpoController::class, 'uploadLogo']);
     Route::apiResource('companias', \App\Http\Controllers\CompaniaController::class);
 
+    // Historial institucional consolidado de compras y órdenes
+    Route::get('/companies/{id}/orders', [\App\Http\Controllers\CompaniaController::class, 'orders']);
+    Route::get('/companias/{id}/orders', [\App\Http\Controllers\CompaniaController::class, 'orders']);
+    Route::get('/fire-departments/{id}/orders', [\App\Http\Controllers\CuerpoController::class, 'orders']);
+
     // ==========================================
     // MÓDULO PROSPECCIÓN
     // ==========================================
