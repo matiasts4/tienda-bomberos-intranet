@@ -43,13 +43,16 @@ use App\Http\Controllers\MpGestionController;
 use App\Http\Controllers\Api\CuttingOrderController;
 use App\Http\Controllers\Api\PackageController;
 
-// Ordenes de Corte & Paquetes (Nueva implementación Fábrica)
+// Ordenes de Corte & Paquetes (Fábrica y Taller)
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cutting-orders', [CuttingOrderController::class, 'index']);
     Route::post('/cutting-orders', [CuttingOrderController::class, 'store']);
+    Route::post('/cutting-orders/from-quote/{quoteId}', [CuttingOrderController::class, 'storeFromQuote']);
     Route::get('/cutting-orders/next-code/generate', [CuttingOrderController::class, 'generateNextCode']);
     Route::get('/cutting-orders/{id}', [CuttingOrderController::class, 'show']);
     Route::put('/cutting-orders/{id}', [CuttingOrderController::class, 'update']);
+    Route::patch('/cutting-orders/{id}/stage', [CuttingOrderController::class, 'updateStage']);
+    Route::get('/cutting-orders/{id}/logs', [CuttingOrderController::class, 'logs']);
     Route::delete('/cutting-orders/{id}', [CuttingOrderController::class, 'destroy']);
 
     // Paquetes
