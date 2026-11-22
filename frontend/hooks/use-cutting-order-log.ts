@@ -1,4 +1,6 @@
 import { useState, useCallback } from "react"
+import useSWR from "swr"
+import { cuttingOrdersAPI, type CuttingOrderLogs } from "@/lib/api/cutting-orders"
 import { getCuttingOrderLogs, getCuttingOrderLogSummary } from "@/lib/mock-data"
 import type { CuttingOrderLogEntry, CuttingOrderLogSummary, OrderStatus } from "@/lib/mock-data"
 
@@ -148,5 +150,27 @@ export function useCuttingOrderLog() {
     logMaterialConsumption,
     logOrderUpdate,
     generateLogPDF
+  }
+}
+
+/**
+ * Trazabilidad real de una orden de corte desde la API: historial de etapas
+ * (fecha, hora y usuario responsable) y registros de bitácora de fábrica.
+ */
+export function useCuttingOrderTimeline(orderId: string | number | null, refreshInterval = 0) {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<CuttingOrderLogs>(
+    orderId ? ["cutting-order-logs", String(orderId)] : null,
+    () => cuttingOrdersAPI.getLogs(orderId as string | number),
+    { refreshInterval, revalidateOnFocus: refreshInterval > 0, keepPreviousData: true }
+  )
+
+  return {
+    timeline: data ?? null,
+    stageHistory: data?.stage_history ?? [],
+    factoryLogs: data?.factory_logs ?? [],
+    error,
+    isLoading,
+    isValidating,
+    refresh: mutate,
   }
 }
