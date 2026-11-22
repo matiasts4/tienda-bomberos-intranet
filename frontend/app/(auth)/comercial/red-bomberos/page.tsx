@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ChevronDown, RefreshCw } from "lucide-react"
+import { ChevronDown, History, RefreshCw, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { ClientQuotesHistoryDialog, type HistoryEntity } from "@/components/comercial/ClientQuotesHistoryDialog"
 import { cn, formatCLP } from "@/lib/utils"
 import { REGIONES_CHILE, nombreRegion } from "@/lib/geo-chile"
 import {
@@ -39,6 +41,8 @@ export default function RedBomberosPage() {
   const [datos, setDatos] = useState<ReporteRed | null>(null)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [busquedaCuerpo, setBusquedaCuerpo] = useState("")
+  const [historial, setHistorial] = useState<HistoryEntity | null>(null)
 
   async function cargar() {
     setCargando(true)
@@ -85,6 +89,14 @@ export default function RedBomberosPage() {
 
   const enFoco = regionId ? cuerpos.filter(c => c.region_id === regionId) : cuerpos
   const total = cobertura(enFoco)
+
+  // Cuerpos visibles para consultar su historial de compras (mayor monto primero).
+  const cuerposListado = useMemo(() => {
+    const termino = busquedaCuerpo.trim().toLowerCase()
+    return enFoco
+      .filter(c => !termino || c.nombre.toLowerCase().includes(termino) || (c.comuna ?? "").toLowerCase().includes(termino))
+      .sort((a, b) => b.monto - a.monto)
+  }, [enFoco, busquedaCuerpo])
 
   const porCartera = useMemo(() => {
     const todos = datos?.cuerpos ?? []
@@ -222,6 +234,48 @@ export default function RedBomberosPage() {
               </div>
             </section>
 
+            <section className="rounded-lg border">
+              <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
+                <h2 className="text-sm font-semibold">Historial por cuerpo</h2>
+                <span className="text-xs text-muted-foreground">{cuerposListado.length} cuerpos</span>
+              </div>
+              <div className="border-b p-2">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                  <Input
+                    value={busquedaCuerpo}
+                    onChange={e => setBusquedaCuerpo(e.target.value)}
+                    placeholder="Buscar cuerpo o comuna"
+                    className="h-8 pl-8 text-xs"
+                    aria-label="Buscar cuerpo de bomberos"
+                  />
+                </div>
+              </div>
+              <ul className="max-h-[300px] divide-y overflow-auto text-xs">
+                {cuerposListado.map(c => (
+                  <li key={c.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{c.nombre}</p>
+                      <p className="text-muted-foreground">
+                        {c.comuna ?? "Sin comuna"} · {c.ventas} {c.ventas === 1 ? "venta" : "ventas"} · {formatCLP(c.monto)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 shrink-0 gap-1 text-xs"
+                      onClick={() => setHistorial({ kind: "cuerpo", id: String(c.id), nombre: c.nombre })}
+                    >
+                      <History className="h-3.5 w-3.5" aria-hidden="true" /> Historial
+                    </Button>
+                  </li>
+                ))}
+                {cuerposListado.length === 0 && (
+                  <li className="px-3 py-4 text-center text-muted-foreground">Sin cuerpos para mostrar.</li>
+                )}
+              </ul>
+            </section>
+
             <p className="text-[11px] leading-relaxed text-muted-foreground">
               Venta = cotización en Ventas con comprobante de pago cargado (PAGO en verde) que no terminó Desistida ni Anulada (las No Vigentes Finalizadas sí cuentan).
               La cartera se asigna en Clientes &amp; Cuerpos → Cuerpos → Editar.
@@ -229,6 +283,11 @@ export default function RedBomberosPage() {
           </div>
         </div>
       </div>
+      <ClientQuotesHistoryDialog
+        open={historial !== null}
+        onOpenChange={abierto => { if (!abierto) setHistorial(null) }}
+        entity={historial}
+      />
     </div>
   )
 }

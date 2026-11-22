@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Pencil, Trash2, Flame } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Flame, History } from "lucide-react"
+import { ClientQuotesHistoryDialog, type HistoryEntity } from "@/components/comercial/ClientQuotesHistoryDialog"
 import { useGeografia } from "@/hooks/use-geografia"
 import { ClientForm, ClientData } from "@/components/comercial/ClientForm"
 import type { Cuerpo } from "@/lib/red-bomberos"
@@ -30,6 +31,7 @@ const emptyForm: Omit<ClientData, "kind"> = {
 }
 
 export function CuerposTab() {
+    const [historyEntity, setHistoryEntity] = useState<HistoryEntity | null>(null)
     const { regiones, provincias } = useGeografia()
     const [items, setItems] = useState<Cuerpo[]>([])
     const [loading, setLoading] = useState(false)
@@ -204,6 +206,14 @@ export function CuerposTab() {
                                         </div>
                                     </div>
                                     <div className="flex shrink-0 items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setHistoryEntity({ kind: "cuerpo", id: String(c.id), nombre: c.nombre })}
+                                            title="Ver historial de compras y órdenes"
+                                        >
+                                            <History className="h-4 w-4 mr-1" /> Historial
+                                        </Button>
                                         <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>
                                             <Pencil className="h-4 w-4 mr-1" /> Editar
                                         </Button>
@@ -217,6 +227,12 @@ export function CuerposTab() {
                     </div>
                 </ScrollArea>
             </div>
+
+            <ClientQuotesHistoryDialog
+                open={historyEntity !== null}
+                onOpenChange={(value) => { if (!value) setHistoryEntity(null) }}
+                entity={historyEntity}
+            />
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto">
