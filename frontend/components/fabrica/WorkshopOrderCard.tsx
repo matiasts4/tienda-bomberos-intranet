@@ -6,6 +6,7 @@ import { es } from "date-fns/locale"
 import { CalendarClock, CheckCircle2, Loader2, Shirt, UserRound, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { CuttingOrder } from "@/lib/api/cutting-orders"
+import { UNSPECIFIED_GARMENT, groupItemsByGarment } from "@/lib/order-garments"
 import {
   ADVANCE_LABELS,
   NEXT_STAGE,
@@ -56,14 +57,9 @@ export function WorkshopOrderCard({ order, advancing, disabled, onAdvance }: Wor
     setConfirming(false)
   }, [order.status])
 
-  const sizeBreakdown = useMemo(() => {
-    const totals = new Map<string, number>()
-    for (const item of order.items ?? []) {
-      const key = item.size?.trim() || "Única"
-      totals.set(key, (totals.get(key) ?? 0) + Number(item.quantity || 0))
-    }
-    return Array.from(totals.entries())
-  }, [order.items])
+  // Una orden puede traer varias prendas: se agrupa por prenda y luego por talla,
+  // para que el taller nunca lea las tallas de una camisa como si fueran poleras.
+  const garments = useMemo(() => groupItemsByGarment(order.items), [order.items])
 
   const totalUnits = order.total_unidades
     ?? order.total_quantity
@@ -111,19 +107,36 @@ export function WorkshopOrderCard({ order, advancing, disabled, onAdvance }: Wor
         </span>
       </header>
 
-      <div className="mt-3 flex items-center gap-2 text-base">
-        <Shirt className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <span className="truncate" title={order.selected_product}>{order.selected_product || "Prenda sin especificar"}</span>
-        <span className="ml-auto shrink-0 text-lg font-bold tabular-nums">{totalUnits} u.</span>
-      </div>
-
-      {sizeBreakdown.length > 0 && (
-        <ul className="mt-3 flex flex-wrap gap-2" aria-label="Unidades por talla">
-          {sizeBreakdown.map(([size, quantity]) => (
-            <li key={size} className="rounded-md border bg-muted/60 px-2.5 py-1 text-sm font-medium tabular-nums">
-              {size} × {quantity}
+      {garments.length === 0 ? (
+        <div className="mt-3 flex items-center gap-2 text-base">
+          <Shirt className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="truncate">{UNSPECIFIED_GARMENT}</span>
+          <span className="ml-auto shrink-0 text-lg font-bold tabular-nums">{totalUnits} u.</span>
+        </div>
+      ) : (
+        <ul className="mt-3 space-y-2.5" aria-label="Prendas de la orden">
+          {garments.map((garment) => (
+            <li key={garment.product}>
+              <div className="flex items-center gap-2 text-base">
+                <Shirt className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span className="truncate font-medium" title={garment.product}>{garment.product}</span>
+                <span className="ml-auto shrink-0 text-lg font-bold tabular-nums">{garment.total} u.</span>
+              </div>
+              <ul className="mt-1.5 flex flex-wrap gap-2 pl-7" aria-label={`Tallas de ${garment.product}`}>
+                {garment.sizes.map(([size, quantity]) => (
+                  <li key={size} className="rounded-md border bg-muted/60 px-2.5 py-1 text-sm font-medium tabular-nums">
+                    {size} × {quantity}
+                  </li>
+                ))}
+              </ul>
             </li>
           ))}
+          {garments.length > 1 && (
+            <li className="flex justify-between border-t pt-2 text-sm font-semibold tabular-nums">
+              <span>Total de la orden</span>
+              <span>{totalUnits} u.</span>
+            </li>
+          )}
         </ul>
       )}
 
