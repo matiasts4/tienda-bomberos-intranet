@@ -47,7 +47,7 @@ export default function FabricaPage() {
     const term = search.trim().toLowerCase()
     if (!term) return orders
     return orders.filter(order =>
-      [order.code, order.client, order.selected_product, order.compania?.nombre, order.cuerpo?.nombre]
+      [order.code, order.client, ...(order.items ?? []).map((item) => item.product_type), order.compania?.nombre, order.cuerpo?.nombre]
         .filter(Boolean)
         .some(value => String(value).toLowerCase().includes(term))
     )

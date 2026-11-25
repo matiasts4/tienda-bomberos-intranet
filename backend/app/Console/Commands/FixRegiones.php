@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\RegionesChile;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -44,13 +45,7 @@ class FixRegiones extends Command
 
             // 2. Restaurar ABSOLUTAMENTE los Nombres Legales de las Regiones
             $this->info('Restaurando nombres oficiales de Regiones en la BD...');
-            $regionNames = [
-                1 => 'Región de Tarapacá', 2 => 'Región de Antofagasta', 3 => 'Región de Atacama', 4 => 'Región de Coquimbo',
-                5 => 'Región de Valparaíso', 6 => 'Región del Libertador Bernardo O\'higgins', 7 => 'Región del Maule',
-                8 => 'Región del Bío Bío', 9 => 'Región de la Araucanía', 10 => 'Región de los Lagos',
-                11 => 'Región de Aysén del General Carlos Ibañez del Campo', 12 => 'Región de Magallanes y la Antártica Chilena',
-                13 => 'Región Metropolitana', 14 => 'Región de los Ríos', 15 => 'Región de Arica', 16 => 'Región de Ñuble'
-            ];
+            $regionNames = RegionesChile::NOMBRES;
             foreach ($regionNames as $id => $name) {
                 DB::table('regiones')->updateOrInsert(['id' => $id], ['nombre' => $name]);
             }

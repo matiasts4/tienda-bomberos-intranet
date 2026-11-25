@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             InsumosSeeder::class,
             EstadosSeeder::class,
             AdminUserSeeder::class,
+            RegionesSeeder::class,
+            ComunasSeeder::class,
             RedBomberosSeeder::class,
             ImportBomberosSeeder::class,
             ComercialSkusGenericosSeeder::class,

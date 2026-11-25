@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { useCuttingOrders } from "@/hooks/use-cutting-orders"
 import { OrderStageTimeline } from "@/components/fabrica/OrderStageTimeline"
 import { STAGE_LABELS, STAGE_STYLES, WORKSHOP_STAGES, isPendingStart, workshopStageOf, type WorkshopStage } from "@/lib/workshop-stages"
+import { garmentLabel, groupItemsByGarment } from "@/lib/order-garments"
 
 /** Frecuencia de actualización del seguimiento en tiempo real. */
 const LIVE_REFRESH_MS = 10000
@@ -30,7 +31,7 @@ export function OrderTrackingPanel() {
       const stage = workshopStageOf(order.status)
       if (stageFilter !== "todas" && stage !== stageFilter) return false
       if (!term) return true
-      return [order.code, order.client, order.selected_product, order.compania?.nombre, order.cuerpo?.nombre]
+      return [order.code, order.client, ...(order.items ?? []).map((item) => item.product_type), order.compania?.nombre, order.cuerpo?.nombre]
         .filter(Boolean)
         .some(value => String(value).toLowerCase().includes(term))
     })
@@ -97,7 +98,7 @@ export function OrderTrackingPanel() {
                       </span>
                     </div>
                     <p className="truncate text-sm text-muted-foreground">
-                      {order.compania?.nombre || order.cuerpo?.nombre || order.client || "Sin cliente"} · {order.selected_product}
+                      {order.compania?.nombre || order.cuerpo?.nombre || order.client || "Sin cliente"} · {garmentLabel(groupItemsByGarment(order.items))}
                     </p>
                     <div className="mt-2 flex gap-1" aria-label={`Avance ${step} de ${WORKSHOP_STAGES.length} etapas`}>
                       {WORKSHOP_STAGES.map((s, index) => (
